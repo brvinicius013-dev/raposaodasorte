@@ -3,11 +3,17 @@
 import { LEAGUES, leagueById, leaguesOfSport, sportById } from '../data/leagues.js';
 import { mockMatches, mockLiveMatches } from '../data/mock.js';
 
-const API_KEY = import.meta.env.VITE_ODDS_API_KEY;
+// Três modos:
+// 1) DIRECT_KEY (dev local, .env): chama a The Odds API direto do navegador.
+// 2) USE_PROXY (site publicado): chama /api/odds, uma função serverless que guarda a chave no servidor.
+// 3) sem nada: dados de exemplo.
+const DIRECT_KEY = import.meta.env.VITE_ODDS_API_KEY;
+const USE_PROXY = !DIRECT_KEY && import.meta.env.PROD;
 const BASE = 'https://api.the-odds-api.com/v4';
 const CACHE_MS = 5 * 60 * 1000;
 
-export const usingRealApi = Boolean(API_KEY);
+export const usingRealApi = Boolean(DIRECT_KEY) || USE_PROXY;
+let proxyDisabled = false; // vira true se o servidor não tiver ODDS_API_KEY
 
 const cache = new Map(); // leagueId -> { t, data }
 const byId = new Map(); // matchId -> match
@@ -62,13 +68,19 @@ function normalize(ev, league) {
 async function fetchLeagueFromApi(league) {
   const hit = cache.get(league.id);
   if (hit && Date.now() - hit.t < CACHE_MS) return hit.data;
-  const url = `${BASE}/sports/${league.apiKey}/odds/?apiKey=${API_KEY}&regions=eu&markets=h2h&oddsFormat=decimal`;
+  const url = DIRECT_KEY
+    ? `${BASE}/sports/${league.apiKey}/odds/?apiKey=${DIRECT_KEY}&regions=eu&markets=h2h&oddsFormat=decimal`
+    : `/api/odds?sport=${league.apiKey}`;
   const res = await fetch(url);
+  if (res.status === 503) {
+    proxyDisabled = true; // proxy sem chave configurada → cai para dados de exemplo
+    return [];
+  }
   if (res.status === 404 || res.status === 422) {
     cache.set(league.id, { t: Date.now(), data: [] }); // campeonato fora de temporada
     return [];
   }
-  if (!res.ok) throw new Error(`The Odds API respondeu ${res.status}`);
+  if (!res.ok) throw new Error(`Odds API respondeu ${res.status}`);
   const json = await res.json();
   const data = remember(json.map((ev) => normalize(ev, league)).filter(Boolean));
   cache.set(league.id, { t: Date.now(), data });
@@ -88,18 +100,27 @@ function sameDay(iso, dayOffset) {
  */
 export async function getMatches({ sportId = 'futebol', leagueId = null, day = null } = {}) {
   let list;
-  if (usingRealApi) {
-    const leagues = leagueId
-      ? [leagueById(leagueId)]
-      : leaguesOfSport(sportId).filter((l) => l.apiKey).slice(0, 3); // economiza cota
-    const real = leagues.filter((l) => l?.apiKey);
-    const results = await Promise.all(real.map(fetchLeagueFromApi));
-    list = results.flat();
-    // Campeonatos sem cobertura na API continuam com dados de exemplo
-    const mockOnly = leagues.filter((l) => l && !l.apiKey).map((l) => l.id);
-    if (mockOnly.length) list = list.concat(mockMatches().filter((m) => mockOnly.includes(m.leagueId)));
+  const scopeMock = () =>
+    mockMatches().filter((m) => (leagueId ? m.leagueId === leagueId : m.sport === sportId));
+  if (usingRealApi && !proxyDisabled) {
+    try {
+      const leagues = leagueId
+        ? [leagueById(leagueId)]
+        : leaguesOfSport(sportId).filter((l) => l.apiKey).slice(0, 3); // economiza cota
+      const real = leagues.filter((l) => l?.apiKey);
+      const results = await Promise.all(real.map(fetchLeagueFromApi));
+      list = results.flat();
+      // Campeonatos sem cobertura na API continuam com dados de exemplo
+      const mockOnly = leagues.filter((l) => l && !l.apiKey).map((l) => l.id);
+      if (mockOnly.length) list = list.concat(mockMatches().filter((m) => mockOnly.includes(m.leagueId)));
+      if (proxyDisabled) throw new Error('proxy-sem-chave');
+    } catch (e) {
+      // No site publicado (proxy), qualquer falha degrada para dados de exemplo em vez de erro.
+      if (USE_PROXY) list = scopeMock();
+      else throw e; // dev local com chave inválida → mostra o erro
+    }
   } else {
-    list = mockMatches().filter((m) => (leagueId ? m.leagueId === leagueId : m.sport === sportId));
+    list = scopeMock();
   }
   list = list.filter((m) => !m.finished);
   if (day !== null) list = list.filter((m) => sameDay(m.start, day));
