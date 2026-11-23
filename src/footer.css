@@ -1,0 +1,13 @@
+.siteFooter {
+  margin-top: 18px;
+  padding: 14px 16px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-mute);
+  text-align: center;
+}
+.siteFooter strong { color: var(--primary); }
+.m-content .siteFooter { margin-top: 10px; }
+
+.brandText { white-space: nowrap; }

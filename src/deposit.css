@@ -1,0 +1,271 @@
+/* ---------- Saldo no topo (desktop) ---------- */
+.headerBalance {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.1;
+  font-weight: 700;
+  color: #fff;
+}
+
+.headerBalance:hover {
+  color: var(--primary-light);
+}
+
+.headerDeposit {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--primary-light);
+}
+
+/* ---------- Saldo no cupom ---------- */
+.slipBalance {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: var(--text-soft);
+}
+
+.slipBalance a {
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.slipBalance a:hover {
+  text-decoration: underline;
+}
+
+/* ---------- Saldo no menu mobile ---------- */
+.m-menu-balance {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 54px;
+  margin-bottom: 10px;
+  padding: 0 15px;
+  border-radius: 5px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 15px;
+}
+
+.m-menu-balance strong {
+  font-size: 18px;
+  margin-left: 4px;
+}
+
+.m-menu-deposit {
+  font-weight: 700;
+  color: var(--primary-light);
+}
+
+/* ---------- Página de depósito ---------- */
+.deposito {
+  max-width: 520px;
+  text-align: center;
+}
+
+.demoBanner {
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: #fff3cd;
+  border: 1px solid #f0d58a;
+  color: #6b5200;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.saldoBox {
+  display: inline-flex;
+  gap: 8px;
+  align-items: baseline;
+  margin-bottom: 18px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+}
+
+.saldoBox strong {
+  font-size: 18px;
+  color: var(--primary);
+}
+
+.depForm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+
+.depLabel {
+  font-weight: 700;
+}
+
+.depAmounts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.depAmounts button {
+  padding: 10px 16px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel);
+  font-weight: 700;
+  color: var(--text-soft);
+}
+
+.depAmounts button.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.depInput {
+  width: 200px;
+  max-width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+  background: #fff;
+}
+
+.depGenerate {
+  width: 240px;
+  max-width: 100%;
+}
+
+.btnLink {
+  border: 0;
+  background: transparent;
+  color: var(--text-mute);
+  text-decoration: underline;
+  padding: 6px;
+}
+
+/* ---------- Estágio pendente + QR ---------- */
+.depPending {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.depValue {
+  margin: 0;
+  font-size: 15px;
+}
+
+.fakeQR {
+  display: grid;
+  gap: 0;
+  padding: 10px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.fakeQR span {
+  background: transparent;
+}
+
+.fakeQR span.on {
+  background: #0d1b12;
+}
+
+.depExpire {
+  margin: 0;
+  font-weight: 700;
+  color: var(--return);
+}
+
+.depCopy {
+  display: flex;
+  width: 100%;
+  max-width: 340px;
+  gap: 0;
+}
+
+.depCopy input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-right: 0;
+  border-radius: 6px 0 0 6px;
+  background: var(--panel-mute);
+  font-size: 12px;
+  color: var(--text-soft);
+}
+
+.depCopy button {
+  padding: 0 14px;
+  border: 0;
+  border-radius: 0 6px 6px 0;
+  background: var(--primary);
+  color: #fff;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.depHint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-mute);
+}
+
+.depSim {
+  width: 240px;
+  max-width: 100%;
+  background: var(--success);
+}
+
+.depSim:hover {
+  background: #2bb563;
+}
+
+/* ---------- Estágio pago ---------- */
+.depPaid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.depCheck {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--success);
+  color: #fff;
+  font-size: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.depPaid h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.depActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 6px;
+}
+
+.depActions .btn {
+  width: auto;
+  padding: 10px 20px;
+}

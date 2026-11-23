@@ -1,0 +1,20 @@
+// Marca própria "Raposa da Sorte" — raposinha geométrica original.
+export default function Logo() {
+  return (
+    <span className="brand">
+      <svg viewBox="0 0 64 64" width="34" height="34" aria-hidden="true">
+        <rect width="64" height="64" rx="14" fill="#1f3d27" />
+        <path
+          d="M13 15 L27 24 Q32 21 37 24 L51 15 L47 33 Q44 48 32 53 Q20 48 17 33 Z"
+          fill="#a6d27b"
+        />
+        <circle cx="26" cy="33" r="2.6" fill="#1f3d27" />
+        <circle cx="38" cy="33" r="2.6" fill="#1f3d27" />
+        <path d="M28.5 41 L35.5 41 L32 45.5 Z" fill="#1f3d27" />
+      </svg>
+      <span className="brandText">
+        RAPOS<strong>ÃO</strong>
+      </span>
+    </span>
+  );
+}
