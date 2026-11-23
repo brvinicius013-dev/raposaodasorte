@@ -39,9 +39,15 @@ export default async function handler(req, res) {
     const recentes = await sql`SELECT code, created_at, player, stake, total_odd, possible_return, status
       FROM bets ORDER BY created_at DESC LIMIT 20`;
 
+    const apostadores = await sql`SELECT username, balance, pix_key, created_at
+      FROM users ORDER BY created_at DESC LIMIT 50`;
+
+    const saques = await sql`SELECT username, amount, pix_key, status, created_at
+      FROM withdrawals ORDER BY created_at DESC LIMIT 20`;
+
     const ggr = Number(totals.total_apostado) * MARGIN;
 
-    return res.status(200).json({ totals, ggr, margin: MARGIN, porDia, exposicao, recentes });
+    return res.status(200).json({ totals, ggr, margin: MARGIN, porDia, exposicao, recentes, apostadores, saques });
   } catch (e) {
     return res.status(500).json({ error: 'erro no banco', detail: String(e.message || e) });
   }

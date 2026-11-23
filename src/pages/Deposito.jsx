@@ -47,9 +47,9 @@ export default function Deposito() {
     return () => clearInterval(timer.current);
   }, [stage]);
 
-  const confirmPaid = () => {
+  const confirmPaid = async () => {
     clearInterval(timer.current);
-    deposit(amount);
+    await deposit(amount);
     setStage('paid');
   };
 

@@ -8,6 +8,7 @@ import './mobile.css';
 import './deposit.css';
 import './footer.css';
 import './admin.css';
+import './conta.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

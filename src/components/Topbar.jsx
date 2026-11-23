@@ -4,7 +4,7 @@ import { fmtBRL } from '../format.js';
 import Logo from './Logo.jsx';
 
 export default function Topbar({ onMenu }) {
-  const { user, setUser, balance } = useBetSlip();
+  const { account, logout, balance } = useBetSlip();
   return (
     <header className="header">
       <button type="button" className="hamburger" onClick={onMenu} aria-label="Abrir menu">
@@ -23,16 +23,16 @@ export default function Topbar({ onMenu }) {
           {fmtBRL(balance)}
           <span className="headerDeposit">+ Depositar</span>
         </Link>
-        {user ? (
+        {account ? (
           <span className="headerUser">
-            <span>Olá, {user.name}</span>
-            <button type="button" onClick={() => setUser(null)}>
+            <Link to="/conta">{account.username}</Link>
+            <button type="button" onClick={logout}>
               Sair
             </button>
           </span>
         ) : (
-          <NavLink to="/login" className="btnLogin">
-            Login
+          <NavLink to="/conta" className="btnLogin">
+            Entrar
           </NavLink>
         )}
       </nav>

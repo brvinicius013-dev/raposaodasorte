@@ -195,6 +195,74 @@ export default function Admin() {
           </table>
         </div>
       </section>
+
+      <section className="admCard">
+        <h2>Apostadores</h2>
+        <div className="admTableWrap">
+          <table className="tableTicket">
+            <thead>
+              <tr>
+                <th>Usuário</th>
+                <th>Saldo</th>
+                <th>Chave PIX (fictícia)</th>
+                <th>Desde</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(data.apostadores || []).map((a) => (
+                <tr key={a.username}>
+                  <td>{a.username}</td>
+                  <td>{fmtBRL(Number(a.balance))}</td>
+                  <td className="mono">{a.pix_key || '—'}</td>
+                  <td>{fmtDateTime(a.created_at)}</td>
+                </tr>
+              ))}
+              {!(data.apostadores || []).length && (
+                <tr>
+                  <td colSpan={4} className="admEmpty">
+                    Nenhum apostador cadastrado ainda.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className="admCard">
+        <h2>Saques solicitados (simulados)</h2>
+        <div className="admTableWrap">
+          <table className="tableTicket">
+            <thead>
+              <tr>
+                <th>Usuário</th>
+                <th>Valor</th>
+                <th>Chave PIX</th>
+                <th>Status</th>
+                <th>Data</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(data.saques || []).map((s, i) => (
+                <tr key={i}>
+                  <td>{s.username}</td>
+                  <td>{fmtBRL(Number(s.amount))}</td>
+                  <td className="mono">{s.pix_key || '—'}</td>
+                  <td>{s.status}</td>
+                  <td>{fmtDateTime(s.created_at)}</td>
+                </tr>
+              ))}
+              {!(data.saques || []).length && (
+                <tr>
+                  <td colSpan={5} className="admEmpty">
+                    Nenhum saque solicitado ainda.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
   );
 }

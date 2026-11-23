@@ -1,5 +1,6 @@
 // Bilhetes: POST cria, GET ?code= consulta. Dados de demonstração (sem dinheiro real).
 import { db, ensureSchema } from './_db.js';
+import { userByToken } from './_auth.js';
 
 const CODE_RE = /^[A-Z0-9]{4,16}$/;
 
@@ -20,12 +21,24 @@ export default async function handler(req, res) {
       const possibleReturn = Number(b.possibleReturn) || 0;
       const selections = Array.isArray(b.selections) ? b.selections.slice(0, 20) : [];
       const live = Boolean(b.live) || selections.some((s) => s && s.live);
+
+      // Se vier com sessão de apostador, desconta do saldo FICTÍCIO da conta.
+      let balance = null;
+      let who = player;
+      const u = await userByToken(sql, req.headers['x-user-token'] || '');
+      if (u) {
+        if (Number(u.balance) < stake) return res.status(400).json({ error: 'saldo insuficiente' });
+        await sql`UPDATE users SET balance = balance - ${stake} WHERE id = ${u.id}`;
+        balance = Number(u.balance) - stake;
+        who = u.username;
+      }
+
       await sql`INSERT INTO bets (code, player, stake, total_odd, possible_return, status, live, selections)
-        VALUES (${code}, ${player}, ${stake}, ${totalOdd}, ${possibleReturn}, 'Aberto', ${live}, ${JSON.stringify(
+        VALUES (${code}, ${who}, ${stake}, ${totalOdd}, ${possibleReturn}, 'Aberto', ${live}, ${JSON.stringify(
         selections,
       )}::jsonb)
         ON CONFLICT (code) DO NOTHING`;
-      return res.status(201).json({ ok: true, code });
+      return res.status(201).json({ ok: true, code, balance });
     }
 
     if (req.method === 'GET') {

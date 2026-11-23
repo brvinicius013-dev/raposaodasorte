@@ -10,9 +10,9 @@ import Admin from './pages/Admin.jsx';
 import AoVivo from './pages/AoVivo.jsx';
 import Campeonatos from './pages/Campeonatos.jsx';
 import ConferirBilhete from './pages/ConferirBilhete.jsx';
+import Conta from './pages/Conta.jsx';
 import Deposito from './pages/Deposito.jsx';
 import Jogos from './pages/Jogos.jsx';
-import Login from './pages/Login.jsx';
 import Partida from './pages/Partida.jsx';
 import Regulamento from './pages/Regulamento.jsx';
 
@@ -27,7 +27,8 @@ const routes = (
     <Route path="/admin" element={<Admin />} />
     <Route path="/conferir-bilhete" element={<ConferirBilhete />} />
     <Route path="/regulamento" element={<Regulamento />} />
-    <Route path="/login" element={<Login />} />
+    <Route path="/conta" element={<Conta />} />
+    <Route path="/login" element={<Conta />} />
     <Route path="*" element={<div className="semEventos">Página não encontrada.</div>} />
   </Routes>
 );

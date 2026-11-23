@@ -103,7 +103,14 @@ export default function BetSlip() {
           </div>
           {stakeError && <div className="formError">{stakeError}</div>}
           <div className="finishBet">
-            <button type="button" disabled={!canFinish} onClick={() => setTicket(finalize())}>
+            <button
+              type="button"
+              disabled={!canFinish}
+              onClick={async () => {
+                const t = await finalize();
+                if (t) setTicket(t);
+              }}
+            >
               Finalizar
             </button>
           </div>

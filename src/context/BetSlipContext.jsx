@@ -1,10 +1,10 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 const BetSlipContext = createContext(null);
 const SLIP_KEY = 'arena.slip';
 const TICKETS_KEY = 'arena.tickets';
-const USER_KEY = 'arena.user';
 const BALANCE_KEY = 'arena.balance';
+const SESSION_KEY = 'arena.session';
 export const MAX_SELECTIONS = 20;
 export const MIN_STAKE = 1;
 export const MAX_STAKE = 1000;
@@ -26,6 +26,14 @@ function save(key, value) {
   }
 }
 
+function drop(key) {
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    /* ignore */
+  }
+}
+
 function newCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let code = '';
@@ -33,29 +41,162 @@ function newCode() {
   return code;
 }
 
+const round2 = (n) => Math.round(n * 100) / 100;
+
 export function BetSlipProvider({ children }) {
   const [selections, setSelections] = useState(() => load(SLIP_KEY, {}).selections || []);
   const [stake, setStake] = useState(() => load(SLIP_KEY, {}).stake || '');
+  const [slipOpen, setSlipOpen] = useState(false);
 
   // Mantém o cupom ao recarregar a página
   useEffect(() => {
     save(SLIP_KEY, { selections, stake });
   }, [selections, stake]);
-  const [user, setUserState] = useState(() => load(USER_KEY, null));
-  const [slipOpen, setSlipOpen] = useState(false);
 
-  // Saldo FICTÍCIO (demonstração). Nenhum valor aqui é dinheiro de verdade.
-  const [balance, setBalance] = useState(() => Number(load(BALANCE_KEY, 0)) || 0);
+  // --- Sessão do apostador (conta no banco). Saldo e PIX são FICTÍCIOS. ---
+  const [token, setToken] = useState(() => load(SESSION_KEY, ''));
+  const tokenRef = useRef(token);
   useEffect(() => {
-    save(BALANCE_KEY, balance);
-  }, [balance]);
+    tokenRef.current = token;
+  }, [token]);
+  const [account, setAccount] = useState(null); // { username, pixKey } quando logado
+  const [serverBalance, setServerBalance] = useState(0);
+  // Saldo local (visitante, sem conta). Em conta, o saldo vem do servidor.
+  const [localBalance, setLocalBalance] = useState(() => Number(load(BALANCE_KEY, 0)) || 0);
+  useEffect(() => {
+    save(BALANCE_KEY, localBalance);
+  }, [localBalance]);
 
-  // Depósito simulado: credita o saldo fictício, sem PIX real.
-  const deposit = useCallback((amount) => {
-    const value = Math.max(0, Number(amount) || 0);
-    setBalance((b) => Math.round((b + value) * 100) / 100);
-    return value;
+  const balance = account ? serverBalance : localBalance;
+
+  const apiFetch = useCallback((url, { method = 'GET', body } = {}) => {
+    const headers = { 'Content-Type': 'application/json' };
+    if (tokenRef.current) headers['x-user-token'] = tokenRef.current;
+    return fetch(url, { method, headers, ...(body ? { body: JSON.stringify(body) } : {}) });
   }, []);
+
+  const applySession = useCallback((tk, user) => {
+    setToken(tk);
+    tokenRef.current = tk;
+    save(SESSION_KEY, tk);
+    setAccount({ username: user.username, pixKey: user.pixKey || '' });
+    setServerBalance(Number(user.balance) || 0);
+  }, []);
+
+  const clearSession = useCallback(() => {
+    setToken('');
+    tokenRef.current = '';
+    drop(SESSION_KEY);
+    setAccount(null);
+    setServerBalance(0);
+  }, []);
+
+  // Restaura a sessão ao abrir o app
+  useEffect(() => {
+    if (!token) return;
+    (async () => {
+      try {
+        const r = await apiFetch('/api/auth');
+        if (r.ok) {
+          const u = await r.json();
+          setAccount({ username: u.username, pixKey: u.pixKey || '' });
+          setServerBalance(Number(u.balance) || 0);
+        } else if (r.status === 401) {
+          clearSession();
+        }
+      } catch {
+        /* sem backend: segue como visitante */
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const register = useCallback(
+    async (username, password) => {
+      try {
+        const r = await fetch('/api/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'register', username, password }),
+        });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) return { error: j.error || `falha (${r.status})` };
+        applySession(j.token, j.user);
+        return { ok: true };
+      } catch {
+        return { error: 'Backend indisponível (no deploy da Vercel funciona).' };
+      }
+    },
+    [applySession],
+  );
+
+  const login = useCallback(
+    async (username, password) => {
+      try {
+        const r = await fetch('/api/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'login', username, password }),
+        });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) return { error: j.error || `falha (${r.status})` };
+        applySession(j.token, j.user);
+        return { ok: true };
+      } catch {
+        return { error: 'Backend indisponível (no deploy da Vercel funciona).' };
+      }
+    },
+    [applySession],
+  );
+
+  const logout = useCallback(async () => {
+    try {
+      await apiFetch('/api/auth', { method: 'POST', body: { action: 'logout' } });
+    } catch {
+      /* ignore */
+    }
+    clearSession();
+  }, [apiFetch, clearSession]);
+
+  const setPix = useCallback(
+    async (pixKey) => {
+      if (!account) return { error: 'entre na conta' };
+      const r = await apiFetch('/api/wallet', { method: 'POST', body: { action: 'setpix', pixKey } });
+      const u = await r.json().catch(() => ({}));
+      if (!r.ok) return { error: u.error || 'falha' };
+      setAccount((a) => ({ ...a, pixKey: u.pixKey || '' }));
+      return { ok: true };
+    },
+    [account, apiFetch],
+  );
+
+  const withdraw = useCallback(
+    async (amount) => {
+      if (!account) return { error: 'entre na conta' };
+      const r = await apiFetch('/api/wallet', { method: 'POST', body: { action: 'withdraw', amount } });
+      const u = await r.json().catch(() => ({}));
+      if (!r.ok) return { error: u.error || 'falha' };
+      setServerBalance(Number(u.balance) || 0);
+      return { ok: true, balance: Number(u.balance) || 0 };
+    },
+    [account, apiFetch],
+  );
+
+  // Depósito SIMULADO: credita saldo fictício (servidor se logado, senão local).
+  const deposit = useCallback(
+    async (amount) => {
+      const value = Math.max(0, Number(amount) || 0);
+      if (account) {
+        const r = await apiFetch('/api/wallet', { method: 'POST', body: { action: 'deposit', amount: value } });
+        const u = await r.json().catch(() => ({}));
+        if (r.ok) setServerBalance(Number(u.balance) || 0);
+        return value;
+      }
+      setLocalBalance((b) => round2(b + value));
+      return value;
+    },
+    [account, apiFetch],
+  );
 
   // selection: { matchId, match, marketId, marketName, pickId, pickLabel, odd }
   const toggle = useCallback((sel) => {
@@ -89,16 +230,15 @@ export function BetSlipProvider({ children }) {
   const stakeValue = Number(stake) || 0;
   const possibleReturn = totalOdd * stakeValue;
 
-  const finalize = useCallback(() => {
+  const finalize = useCallback(async () => {
     if (stakeValue > balance) return null; // saldo fictício insuficiente
-    setBalance((b) => Math.round((b - stakeValue) * 100) / 100);
     const ticket = {
       code: newCode(),
       createdAt: new Date().toISOString(),
-      user: user?.name || 'Visitante',
+      user: account?.username || 'Visitante',
       stake: stakeValue,
-      totalOdd: Math.round(totalOdd * 100) / 100,
-      possibleReturn: Math.round(possibleReturn * 100) / 100,
+      totalOdd: round2(totalOdd),
+      possibleReturn: round2(possibleReturn),
       status: 'Aberto',
       selections: selections.map((s) => ({
         match: `${s.match.home} x ${s.match.away}`,
@@ -110,10 +250,34 @@ export function BetSlipProvider({ children }) {
         live: Boolean(s.match.live),
       })),
     };
-    const tickets = load(TICKETS_KEY, {});
-    tickets[ticket.code] = ticket;
-    save(TICKETS_KEY, tickets);
-    // Envia ao banco (se o backend existir); não trava a interface se falhar.
+
+    const saveLocal = () => {
+      const tickets = load(TICKETS_KEY, {});
+      tickets[ticket.code] = ticket;
+      save(TICKETS_KEY, tickets);
+    };
+
+    if (account) {
+      // Conta: o servidor desconta o saldo fictício. Só confirma se o servidor aceitar.
+      try {
+        const r = await apiFetch('/api/bets', {
+          method: 'POST',
+          body: { ...ticket, player: ticket.user, live: ticket.selections.some((s) => s.live) },
+        });
+        if (!r.ok) return null;
+        const data = await r.json().catch(() => ({}));
+        if (typeof data.balance === 'number') setServerBalance(data.balance);
+        saveLocal();
+        clear();
+        return ticket;
+      } catch {
+        return null; // sem backend não dá para apostar logado
+      }
+    }
+
+    // Visitante: saldo local, envio ao banco é best-effort.
+    setLocalBalance((b) => round2(b - stakeValue));
+    saveLocal();
     fetch('/api/bets', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -121,27 +285,16 @@ export function BetSlipProvider({ children }) {
     }).catch(() => {});
     clear();
     return ticket;
-  }, [selections, stakeValue, totalOdd, possibleReturn, user, clear, balance]);
+  }, [selections, stakeValue, totalOdd, possibleReturn, account, apiFetch, clear, balance]);
 
   const findTicket = useCallback((code) => load(TICKETS_KEY, {})[code.trim().toUpperCase()] || null, []);
-
-  const setUser = useCallback((u) => {
-    setUserState(u);
-    if (u) save(USER_KEY, u);
-    else {
-      try {
-        localStorage.removeItem(USER_KEY);
-      } catch {
-        /* ignore */
-      }
-    }
-  }, []);
 
   const value = {
     selections, toggle, remove, clear, isSelected,
     stake, setStake, stakeValue, totalOdd, possibleReturn, finalize, findTicket,
-    user, setUser, slipOpen, setSlipOpen,
+    slipOpen, setSlipOpen,
     balance, deposit,
+    account, login, register, logout, setPix, withdraw,
   };
   return <BetSlipContext.Provider value={value}>{children}</BetSlipContext.Provider>;
 }

@@ -97,7 +97,15 @@ export default function MobileBetSlip() {
               </Link>
             </div>
             {stakeError && <div className="formError">{stakeError}</div>}
-            <button type="button" className="m-slip-finish" disabled={!canFinish} onClick={() => setTicket(finalize())}>
+            <button
+              type="button"
+              className="m-slip-finish"
+              disabled={!canFinish}
+              onClick={async () => {
+                const t = await finalize();
+                if (t) setTicket(t);
+              }}
+            >
               Finalizar
             </button>
           </div>

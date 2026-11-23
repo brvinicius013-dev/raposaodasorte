@@ -25,5 +25,23 @@ export async function ensureSchema(sql) {
     live boolean NOT NULL DEFAULT false,
     selections jsonb NOT NULL DEFAULT '[]'
   )`;
+  // Apostadores (demonstração): saldo FICTÍCIO, chave PIX FICTÍCIA. Senha com hash.
+  await sql`CREATE TABLE IF NOT EXISTS users (
+    id serial PRIMARY KEY,
+    username text UNIQUE NOT NULL,
+    pass_hash text NOT NULL,
+    token text,
+    balance numeric NOT NULL DEFAULT 0,
+    pix_key text,
+    created_at timestamptz NOT NULL DEFAULT now()
+  )`;
+  await sql`CREATE TABLE IF NOT EXISTS withdrawals (
+    id serial PRIMARY KEY,
+    username text NOT NULL,
+    amount numeric NOT NULL,
+    pix_key text,
+    status text NOT NULL DEFAULT 'Solicitado',
+    created_at timestamptz NOT NULL DEFAULT now()
+  )`;
   ensured = true;
 }

@@ -14,7 +14,7 @@ function Item({ to, icon, children }) {
 }
 
 export default function MobileMenu() {
-  const { user, setUser, balance } = useBetSlip();
+  const { account, logout, balance } = useBetSlip();
   const [moreOpen, setMoreOpen] = useState(false);
   const [futebol, ...others] = SPORTS;
 
@@ -47,18 +47,19 @@ export default function MobileMenu() {
             </div>
           )}
         </div>
+        <Item to="/conta" icon="👤">Minha Conta</Item>
         <Item to="/regulamento" icon="📄">Regulamento</Item>
         <Item to="/conferir-bilhete" icon="🎫">Conferir Bilhete</Item>
-        {user ? (
+        {account ? (
           <div className="m-menu-user">
-            <span>Olá, {user.name}</span>
-            <button type="button" onClick={() => setUser(null)}>
+            <span>{account.username}</span>
+            <button type="button" onClick={logout}>
               Sair
             </button>
           </div>
         ) : (
-          <Link className="m-menu-login" to="/login">
-            Login
+          <Link className="m-menu-login" to="/conta">
+            Entrar / Cadastrar
           </Link>
         )}
       </div>
