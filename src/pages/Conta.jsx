@@ -1,14 +1,16 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useBetSlip } from '../context/BetSlipContext.jsx';
-import { fmtBRL } from '../format.js';
+import { fmtBRL, fmtDateTime, fmtOdd } from '../format.js';
 
 // Login / cadastro e carteira do apostador. TUDO FICTÍCIO: saldo, PIX e saque são simulados.
 export default function Conta() {
-  const { account, login, register, logout, balance, setPix, withdraw } = useBetSlip();
+  const { account, login, register, logout, balance, setPix, withdraw, myBets } = useBetSlip();
 
   if (!account) return <AuthForms login={login} register={register} />;
-  return <Wallet account={account} balance={balance} setPix={setPix} withdraw={withdraw} logout={logout} />;
+  return (
+    <Wallet account={account} balance={balance} setPix={setPix} withdraw={withdraw} logout={logout} myBets={myBets} />
+  );
 }
 
 function AuthForms({ login, register }) {
@@ -64,11 +66,20 @@ function AuthForms({ login, register }) {
   );
 }
 
-function Wallet({ account, balance, setPix, withdraw, logout }) {
+function Wallet({ account, balance, setPix, withdraw, logout, myBets }) {
   const [pix, setPixInput] = useState(account.pixKey || '');
   const [wAmount, setWAmount] = useState('');
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
+  const [bets, setBets] = useState(null); // null = carregando
+
+  useEffect(() => {
+    let alive = true;
+    myBets().then((list) => alive && setBets(list));
+    return () => {
+      alive = false;
+    };
+  }, [myBets]);
 
   const savePix = async () => {
     setMsg('');
@@ -155,6 +166,53 @@ function Wallet({ account, balance, setPix, withdraw, logout }) {
 
       {msg && <div className="infoBar">{msg}</div>}
       {err && <div className="formError">{err}</div>}
+
+      <section className="admCard">
+        <h2>Histórico de apostas</h2>
+        {bets === null && <p className="muted">Carregando…</p>}
+        {bets && bets.length === 0 && <p className="muted">Você ainda não fez apostas.</p>}
+        {bets && bets.length > 0 && (
+          <div className="admTableWrap">
+            <table className="tableTicket">
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Data</th>
+                  <th>Palpites</th>
+                  <th>Valor</th>
+                  <th>Cotação</th>
+                  <th>Retorno</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {bets.map((b) => {
+                  const sels = Array.isArray(b.selections) ? b.selections : [];
+                  const first = sels[0];
+                  return (
+                    <tr key={b.code}>
+                      <td>
+                        <Link className="mono" to={`/conferir-bilhete?codigo=${b.code}`}>
+                          {b.code}
+                        </Link>
+                      </td>
+                      <td>{fmtDateTime(b.created_at)}</td>
+                      <td>
+                        {first ? first.match : '—'}
+                        {sels.length > 1 && <span className="muted"> +{sels.length - 1}</span>}
+                      </td>
+                      <td>{fmtBRL(Number(b.stake))}</td>
+                      <td>{fmtOdd(Number(b.total_odd))}</td>
+                      <td>{fmtBRL(Number(b.possible_return))}</td>
+                      <td>{b.status}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
     </div>
   );
 }

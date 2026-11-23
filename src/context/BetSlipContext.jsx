@@ -289,12 +289,24 @@ export function BetSlipProvider({ children }) {
 
   const findTicket = useCallback((code) => load(TICKETS_KEY, {})[code.trim().toUpperCase()] || null, []);
 
+  // Histórico do apostador logado (vem do servidor).
+  const myBets = useCallback(async () => {
+    if (!account) return [];
+    try {
+      const r = await apiFetch('/api/bets');
+      if (r.ok) return await r.json();
+    } catch {
+      /* sem backend */
+    }
+    return [];
+  }, [account, apiFetch]);
+
   const value = {
     selections, toggle, remove, clear, isSelected,
     stake, setStake, stakeValue, totalOdd, possibleReturn, finalize, findTicket,
     slipOpen, setSlipOpen,
     balance, deposit,
-    account, login, register, logout, setPix, withdraw,
+    account, login, register, logout, setPix, withdraw, myBets,
   };
   return <BetSlipContext.Provider value={value}>{children}</BetSlipContext.Provider>;
 }

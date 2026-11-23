@@ -43,10 +43,18 @@ export default async function handler(req, res) {
 
     if (req.method === 'GET') {
       const code = String(req.query.code || '').toUpperCase();
-      if (!CODE_RE.test(code)) return res.status(400).json({ error: 'code invalido' });
-      const rows = await sql`SELECT * FROM bets WHERE code = ${code} LIMIT 1`;
-      if (!rows.length) return res.status(404).json({ error: 'nao encontrado' });
-      return res.status(200).json(rows[0]);
+      if (code) {
+        if (!CODE_RE.test(code)) return res.status(400).json({ error: 'code invalido' });
+        const rows = await sql`SELECT * FROM bets WHERE code = ${code} LIMIT 1`;
+        if (!rows.length) return res.status(404).json({ error: 'nao encontrado' });
+        return res.status(200).json(rows[0]);
+      }
+      // Sem code: histórico do apostador logado.
+      const u = await userByToken(sql, req.headers['x-user-token'] || '');
+      if (!u) return res.status(401).json({ error: 'informe um code ou autentique' });
+      const rows = await sql`SELECT code, created_at, stake, total_odd, possible_return, status, live, selections
+        FROM bets WHERE player = ${u.username} ORDER BY created_at DESC LIMIT 50`;
+      return res.status(200).json(rows);
     }
 
     res.setHeader('Allow', 'GET, POST');
