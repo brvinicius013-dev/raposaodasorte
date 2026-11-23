@@ -1,0 +1,139 @@
+/* ---------- Painel do operador ---------- */
+.admLogin .checkTicket {
+  max-width: 360px;
+}
+
+.admPanel {
+  max-width: 920px;
+  text-align: left;
+}
+
+.admHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.admTiles {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin: 14px 0;
+}
+
+.admTiles.small {
+  grid-template-columns: repeat(3, 1fr);
+  max-width: 480px;
+}
+
+.admTile {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px;
+  border-radius: 8px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+}
+
+.admTile-label {
+  font-size: 12px;
+  color: var(--text-mute);
+}
+
+.admTile-value {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.admTile.good .admTile-value {
+  color: #0a7a3f;
+}
+
+.admTile.warn .admTile-value {
+  color: #b5660a;
+}
+
+.admCard {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+}
+
+.admCard h2 {
+  margin: 0 0 12px;
+  font-size: 15px;
+}
+
+/* Barras de uma cor (verde da marca), com rótulo de valor */
+.admBars {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admBar-row {
+  display: grid;
+  grid-template-columns: minmax(90px, 190px) 1fr auto;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.admBar-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--text-soft);
+}
+
+.admBar-track {
+  position: relative;
+  height: 14px;
+  background: var(--panel-mute);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.admBar-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  min-width: 4px;
+  background: var(--primary);
+  border-radius: 3px;
+}
+
+.admBar-value {
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.admEmpty {
+  padding: 14px;
+  text-align: center;
+  color: var(--text-mute);
+  font-size: 13px;
+}
+
+.admTableWrap {
+  overflow-x: auto;
+}
+
+.admPanel .mono {
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  letter-spacing: 1px;
+}
+
+@media (max-width: 700px) {
+  .admTiles {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .admBar-row {
+    grid-template-columns: minmax(70px, 120px) 1fr auto;
+    font-size: 12px;
+  }
+}

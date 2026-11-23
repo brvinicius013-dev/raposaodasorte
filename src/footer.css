@@ -11,3 +11,6 @@
 .m-content .siteFooter { margin-top: 10px; }
 
 .brandText { white-space: nowrap; }
+
+.siteFooter-links { display: block; margin-top: 6px; }
+.siteFooter-links a { color: var(--text-mute); text-decoration: underline; }

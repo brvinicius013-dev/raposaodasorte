@@ -10,10 +10,38 @@ export default function ConferirBilhete() {
   const [ticket, setTicket] = useState(null);
   const [notFound, setNotFound] = useState(false);
 
-  const search = (value) => {
-    const t = findTicket(value);
-    setTicket(t);
-    setNotFound(!t);
+  // Converte a linha do banco (snake_case) para o formato usado na tela.
+  const fromRow = (r) => ({
+    code: r.code,
+    createdAt: r.created_at,
+    user: r.player,
+    stake: Number(r.stake),
+    totalOdd: Number(r.total_odd),
+    possibleReturn: Number(r.possible_return),
+    status: r.status,
+    selections: r.selections || [],
+  });
+
+  const search = async (value) => {
+    const local = findTicket(value);
+    if (local) {
+      setTicket(local);
+      setNotFound(false);
+      return;
+    }
+    // Não achou no navegador → tenta o banco (se o backend existir).
+    try {
+      const res = await fetch(`/api/bets?code=${encodeURIComponent(value.trim().toUpperCase())}`);
+      if (res.ok) {
+        setTicket(fromRow(await res.json()));
+        setNotFound(false);
+        return;
+      }
+    } catch {
+      /* sem backend: segue como não encontrado */
+    }
+    setTicket(null);
+    setNotFound(true);
   };
 
   useEffect(() => {

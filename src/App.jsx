@@ -6,6 +6,7 @@ import SiteFooter from './components/SiteFooter.jsx';
 import Topbar from './components/Topbar.jsx';
 import useIsMobile from './hooks/useIsMobile.js';
 import MobileLayout from './mobile/MobileLayout.jsx';
+import Admin from './pages/Admin.jsx';
 import AoVivo from './pages/AoVivo.jsx';
 import Campeonatos from './pages/Campeonatos.jsx';
 import ConferirBilhete from './pages/ConferirBilhete.jsx';
@@ -23,6 +24,7 @@ const routes = (
     <Route path="/ao-vivo" element={<AoVivo />} />
     <Route path="/partida/:id" element={<Partida />} />
     <Route path="/deposito" element={<Deposito />} />
+    <Route path="/admin" element={<Admin />} />
     <Route path="/conferir-bilhete" element={<ConferirBilhete />} />
     <Route path="/regulamento" element={<Regulamento />} />
     <Route path="/login" element={<Login />} />

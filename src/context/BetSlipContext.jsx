@@ -113,6 +113,12 @@ export function BetSlipProvider({ children }) {
     const tickets = load(TICKETS_KEY, {});
     tickets[ticket.code] = ticket;
     save(TICKETS_KEY, tickets);
+    // Envia ao banco (se o backend existir); não trava a interface se falhar.
+    fetch('/api/bets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...ticket, player: ticket.user, live: ticket.selections.some((s) => s.live) }),
+    }).catch(() => {});
     clear();
     return ticket;
   }, [selections, stakeValue, totalOdd, possibleReturn, user, clear, balance]);
